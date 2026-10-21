@@ -1,6 +1,9 @@
 // stylelint-disable hue-degree-notation, @stylistic/number-leading-zero
 
 @use "sass:map";
+@use "sass:list";
+@use "sass:math";
+@use "sass:string";
 @use "functions" as *;
 @use "mixins/tokens" as *;
 
@@ -26,12 +29,12 @@ $cyan: oklch(69% 0.22 220) !default;
 $brown: oklch(60% 0.12 54) !default;
 $gray: oklch(60% 0.02 245) !default;
 $pewter: oklch(65% 0.01 290) !default;
+$sunset: oklch(65% 0.2 30) !default;
 // scss-docs-end colors-list
 
 // scss-docs-start colors-map
 $colors: () !default;
 
-// stylelint-disable-next-line scss/dollar-variable-default
 $colors: defaults(
   (
     "blue": $blue,
@@ -50,56 +53,74 @@ $colors: defaults(
     "brown": $brown,
     "gray": $gray,
     "pewter": $pewter,
+    "sunset": $sunset,
   ),
   $colors
 );
 // scss-docs-end colors-map
 
-// scss-docs-start color-mix-options
-$color-mix-space: oklch !default;
-$tint-color: var(--white) !default;
-$shade-color: var(--black) !default;
+// scss-docs-start mixing-ranges-map
+$mixing-ranges:() !default;
 
-$color-tints: () !default;
 // stylelint-disable-next-line scss/dollar-variable-default
-$color-tints: defaults(
+$mixing-range-gamut: display-p3 !default;
+$mixing-range-space: oklch !default;
+
+$mixing-ranges: defaults(
   (
-    "025": 94%,
-    "050": 90%,
-    "100": 80%,
-    "200": 60%,
-    "300": 40%,
-    "400": 20%,
+    "sunset": (oklch(95% 0.0631 90), oklch(85% 0.1436 80), oklch(75% 0.173 55), $sunset, oklch(55% 0.2198 10), oklch(45% 0.1871 350), oklch(30% 0.1436 320)),
   ),
-  $color-tints
+$mixing-ranges
 );
 
-$color-shades: () !default;
-// stylelint-disable-next-line scss/dollar-variable-default
-$color-shades: defaults(
-  (
-    "600": 16%,
-    "700": 32%,
-    "800": 48%,
-    "900": 64%,
-    "950": 70%,
-    "975": 76%,
-  ),
-  $color-shades
-);
-// scss-docs-end color-mix-options
+@each $color-name, $color in $colors {
+  $range: map.get($mixing-ranges, $color-name);
+  @if ($range == null) {
+      $range: create-range($color, $mixing-range-space);
+  }
+  $mixing-ranges: map.set($mixing-ranges, $color-name, correct-gamut-all($range, $mixing-range-gamut));
+}
+// scss-docs-end mixing-ranges-map
+
+// scss-docs-start luminance-scale-options
+$white-value: 0 !default;
+$black-value: 1000 !default;
+$color-stops: (25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950, 975) !default;
+
+$luminance-calibration-constants: ("WCAG2": 21, "APCA": 4.076621147, "APCA-positive": 4.85544474, "APCA-negative": 3.456845874);
+$luminance-calibration: "APCA" !default;
+// scss-docs-end luminance-scale-options
+
+@function target-luminance($n) {
+    $r: math.div($n - $black-value, $white-value - $black-value);
+    $t: map.get($luminance-calibration-constants, $luminance-calibration);
+    @return math.div(math.pow($t, $r) - 1, $t - 1);
+}
+
+$median-luminance: target-luminance(math.div($white-value + $black-value, 2)) !default;
+
+$color-stop-luminances: () !default;
+
+@each $n in $color-stops {
+  $nToken: $n+"";
+  @while (string.length($nToken) < 3) {
+    $nToken: "0" + $nToken;
+  }
+  $color-stop-luminances: map.set($color-stop-luminances, $nToken, target-luminance($n));
+}
 
 // scss-docs-start color-tokens
 $color-tokens: () !default;
-
 $-color-defaults: () !default;
-@each $color, $value in $colors {
-  @each $stop, $percent in $color-tints {
-    $-color-defaults: map.set($-color-defaults, --#{$color}-#{$stop}, color-mix(in #{$color-mix-space}, #{$tint-color} #{$percent}, #{$value}));
-  }
-  $-color-defaults: map.set($-color-defaults, --#{$color}-500, #{$value});
-  @each $stop, $percent in $color-shades {
-    $-color-defaults: map.set($-color-defaults, --#{$color}-#{$stop}, color-mix(in #{$color-mix-space}, #{$shade-color} #{$percent}, #{$value}));
+
+@each $color-name, $color in $colors {
+  $color-tokens: map.set($color-tokens, "--#{$color-name}", $color); // create base token
+  $contrast-color: if(sass(luminance($color) <= $median-luminance): #fff; else: #000);
+  $color-tokens:map.set($color-tokens, "--#{$color-name}-con", $contrast-color); // create contrast token
+  
+  $range: map.get($mixing-ranges, $color-name);
+  @each $stop, $Y in $color-stop-luminances {       // create luminance range tokens
+    $color-tokens: map.set($color-tokens, "--#{$color-name}-#{$stop}", mix-from-range($range, $Y));
   }
 }
 
