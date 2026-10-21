@@ -27,14 +27,14 @@ Theme colors include the following semantic colors:
 <BsTable>
 | Theme color | Default value | Description |
 | --- | --- | --- |
-| `primary` | <Swatch size="inline" bg="blue-500" /> `var(--bs-blue-500)`| Main brand color for primary actions |
-| `accent` | <Swatch size="inline" bg="indigo-500" /> `var(--bs-indigo-500)` | Complementary brand color option |
-| `success` | <Swatch size="inline" bg="green-500" /> `var(--bs-green-500)` | Positive actions and successful states |
-| `danger` | <Swatch size="inline" bg="red-500" /> `var(--bs-red-500)` | Destructive actions and error states |
-| `warning` | <Swatch size="inline" bg="yellow-500" /> `var(--bs-yellow-500)` | Cautionary messages and states |
-| `info` | <Swatch size="inline" bg="cyan-500" /> `var(--bs-cyan-500)` | Informational messages and neutral states |
+| `primary` | <Swatch size="inline" bg="blue" /> `var(--bs-blue)`| Main brand color for primary actions |
+| `accent` | <Swatch size="inline" bg="indigo" /> `var(--bs-indigo)` | Complementary brand color option |
+| `success` | <Swatch size="inline" bg="green" /> `var(--bs-green)` | Positive actions and successful states |
+| `danger` | <Swatch size="inline" bg="red" /> `var(--bs-red)` | Destructive actions and error states |
+| `warning` | <Swatch size="inline" bg="yellow" /> `var(--bs-yellow)` | Cautionary messages and states |
+| `info` | <Swatch size="inline" bg="cyan" /> `var(--bs-cyan)` | Informational messages and neutral states |
 | `inverse` | <Swatch size="inline" bg="gray-900" /> `var(--bs-gray-900)` | High contrast by inverting foreground and background |
-| `secondary` | <Swatch size="inline" bg="gray-300" /> `var(--bs-gray-300)` | Less prominent actions and states |
+| `secondary` | <Swatch size="inline" bg="gray" /> `var(--bs-gray)` | Less prominent actions and states |
 </BsTable>
 
 And within each semantic theme color, you’ll find the following keys, most of which are color-mode adaptive:
@@ -86,9 +86,8 @@ Every token is available as a CSS variable, and most are then consumed by our ut
 Not all colors can be used for all purposes due to accessibility, color contrast, and general aesthetic considerations. Here are some recommended pairings.
 
 - `contrast` work best with `bg`
-- `fg` works best with `subtle`
 - `fg-emphasis` works best with `muted`
-- `border` works best with `subtle`, but can be used with `muted`
+- `fg` works best with `subtle`
 
 <Example code={`<div class="theme-primary vstack gap-3">
     <div style="color: var(--bs-theme-contrast); background: var(--bs-theme-bg);" class="p-3 rounded-5">

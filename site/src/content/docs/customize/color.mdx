@@ -18,15 +18,20 @@ There are 13 shades of 16 colors in Bootstrap’s new color system, meaning we h
 
 All Bootstrap colors are available as Sass variables and a Sass map in `scss/_config.scss` file. To avoid increased file sizes, we don’t create text or background color classes for each of these variables. Instead, we choose a subset of these colors for a [theme palette]([[docsref:/customize/theme]]).
 
-Be sure to monitor contrast ratios as you customize colors. As shown below, we’ve added three contrast ratios to each of the main colors—one for the swatch’s current colors, one for against white, and one for against black.
+Colors are calibrated to a luminance scale that is kept consistent between palettes. This scale also makes it easy to control for the exact lightness/darkness of a color from any palette, and easy to predict the contrast ratio between a pair of colors.
 
 <div class="grid bd-colors-grid">
   {getData('colors').map((color) => {
      return (
        <div class="d-contents grid-cols-fill">
          <h5 class="d-block text-capitalize grid-cols-fill">{color.name.replace('-', ' ')}</h5>
+         
+          <div class="mb-3 font-monospace small">
+            <Swatch bg={`${color.name}`} size="medium" />
+            <div class="text-center fg-3">base</div>
+          </div>
 
-         {["025", "050", ...getSequence(100, 900, 100), 950, 975].map((value) => {
+         {["con", "050", ...getSequence(100, 900, 100), 950].map((value) => {
            return (
              <div class="mb-3 font-monospace small">
                <Swatch bg={`${color.name}-${value}`} size="medium" />
@@ -65,35 +70,71 @@ The above colors are then turned into a Sass map called `$colors`.
 
 <ScssDocs name="colors-map" file="scss/_colors.scss" />
 
-### Color mixing
+For each color, a mixing range is generated. This is a sequence of colors from light to dark, derived from the base color. These are not our final palettes, but will be used as reference for mixing those palettes. You can restrict your reference colors to a chosen gamut, and mix them in a chosen color space.
 
-As mentioned already, we generate lighter (tints) and darker (shades) versions of each color using the `color-mix()` function. This allows us to quickly and easily generate a full scale of colors.
+At this stage, it is also possible to assign any color a custom mixing range, allowing the creation of vibrant palettes that vary in hue. The "sunset" palette demos this functionality.
 
-The tint and shade stops, the `color-mix()` color space, and the mix colors are all customizable.
+<ScssDocs name="mixing-ranges-map" file="scss/_colors.scss" />
 
-<ScssDocs name="color-mix-options" file="scss/_colors.scss" />
+### Luminance Scale
 
-Those options and the `$colors` map are used to generate a `$color-tokens` map, which is output as CSS custom properties on `:root`.
+Palettes are calibrated to a luminance scale that ensures predictable lightness/darkness at each numeric stop, and balanced contrast ratios along the scale. If you need to achieve a given contrast ratio, it's as simple as selecting two colors that are a certain distance apart on the scale.
+
+You can customize the numeric span of the luminance scale, which stops on that scale to generate colors for, and whether to calibrate the scale for WCAG 2 or APCA contrast.
+
+<ScssDocs name="luminance-scale-options" file="scss/_colors.scss" />
+
+The median stop (`500` by default) targets equal contrast against both black and white. 
+- For **APCA** we target **Lc±50** median contrast, with a margin for error depending on the foreground/background relationship.
+- In **WCAG 2**, median contrast is **4.58:1**.
+
+ Any two colors that are 500 units apart will give that same contrast, and other distances on the scale give similarly-predictable contrast ratios. See the table below.
+
+<BsTable>
+|Span between stops|Estimated APCA contrast|WCAG 2 contrast|
+|---|---|---|
+|300|`Lc±30`|`2.49:1`|
+|400|`Lc±40`|`3.38:1`|
+|500|`Lc±50`|`4.58:1`|
+|600|`Lc±60`|`6.21:1`|
+|700|`Lc±70`|`8.42:1`|
+|800|`Lc±80`|`11.4:1`|
+|900|`Lc±90`|`15.5:1`|
+</BsTable>
+
+<Callout type="warning">
+- The **APCA** values shown above are *only* applicable when  `$luminance-calibration` is set to `"APCA"`.
+- The **WCAG 2** values shown above are *only* applicable when  `$luminance-calibration` is set to `"WCAG2"`.
+<br/>
+Calibrating contrast for one standard can yield results that fall short in the other. On the whole, APCA is stricter with dark color combinations, while WCAG 2 is stricter with light colors. When in doubt about a color choice, or when standards conflict, consider erring on the side of greater contrast.
+</Callout>
+
+### Final mixing
+
+Based on the configurations above, our `$mixing-ranges` map (which is in turn derived from the `$colors` map) is used to mix our final color tokens. A `$color-tokens` map is created, and output as CSS custom properties on `:root`.
+
+Two additional tokens are included: one for the originally-defined base color, and one that gives the most contrast possible against that color.
 
 <ScssDocs name="color-tokens" file="scss/_colors.scss" />
 
-In practice, our CSS variables that get output from this looks like this:
+In practice, our final output CSS variables look like this:
 
 ```scss
 // Example generated custom properties from _colors.scss
---bs-blue-025: color-mix(in lab, var(--bs-white) 94%, oklch(60% 0.24 240));
---bs-blue-050: color-mix(in lab, var(--bs-white) 90%, oklch(60% 0.24 240));
---bs-blue-100: color-mix(in lab, var(--bs-white) 80%, oklch(60% 0.24 240));
-// ...
---bs-blue-500: oklch(60% 0.24 240);
-// ...
---bs-blue-900: color-mix(in lab, var(--bs-black) 64%, oklch(60% 0.24 240));
---bs-blue-975: color-mix(in lab, var(--bs-black) 88%, oklch(60% 0.24 240));
-```
+--bs-blue: oklch(60% 0.24 240deg); // original base color
+--bs-blue-con: #fff;               // max contrast against base
 
-<Callout type="info">
-We use CSS variables `var(--bs-white)` and `var(--bs-black)` to prevent LightningCSS from converting the real-time mixing into static `lab()` values. Unfortunately, this feature cannot be disabled in LightningCSS at this time.
-</Callout>
+// generated luminance stops
+--bs-blue-025: oklch(98.434179349% 0.00876563 243.815543119deg);
+--bs-blue-050: oklch(96.8716682856% 0.0176945205 243.121018952deg);
+--bs-blue-100: oklch(93.7533669842% 0.036116881 241.6331264861deg);
+--bs-blue-200: oklch(87.5681997734% 0.0732477856 240.7208500549deg);
+// ...
+--bs-blue-800: oklch(47.4568579607% 0.1555413323 245.0994278981deg);
+--bs-blue-900: oklch(36.8380234051% 0.1236608115 246.27436098deg);
+--bs-blue-950: oklch(28.9509172443% 0.1000866027 247.6402877807deg);
+--bs-blue-975: oklch(22.8497495302% 0.0791815856 247.7467174968deg);
+```
 
 ## Customizing
 

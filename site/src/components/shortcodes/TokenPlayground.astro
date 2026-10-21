@@ -33,11 +33,11 @@ const palette = [
 const css = `.token-demo {
   --bs-radius-5: ${defaultRadius}rem;
   --bs-spacer: ${defaultSpacer}rem;
-  --bs-primary-base: var(--bs-${defaultColor}-500);
+  --bs-primary-base: var(--bs-${defaultColor});
   --bs-primary-bg: var(--bs-primary-base);
   --bs-primary-bg-subtle: light-dark(var(--bs-${defaultColor}-100), var(--bs-${defaultColor}-900));
   --bs-primary-fg: light-dark(var(--bs-${defaultColor}-600), var(--bs-${defaultColor}-400));
-  --bs-primary-border: light-dark(var(--bs-${defaultColor}-300), var(--bs-${defaultColor}-600));
+  --bs-primary-border: light-dark(var(--bs-${defaultColor}-400), var(--bs-${defaultColor}-600));
 }`
 ---
 
@@ -97,7 +97,7 @@ const css = `.token-demo {
               <button
                 type="button"
                 class:list={['bd-token-swatch', { selected: color.name === defaultColor }]}
-                style={`background-color: var(--bs-${color.name}-500)`}
+                style={`background-color: var(--bs-${color.name})`}
                 data-value={color.name}
                 aria-label={color.label}
                 aria-pressed={color.name === defaultColor}
@@ -268,15 +268,15 @@ const css = `.token-demo {
     // leaves the alert on the compiled blue pairing, so restate all nine.
     function primaryTokens(color: string) {
       return {
-        base: `var(--bs-${color}-500)`,
-        bg: `var(--bs-${color}-500)`,
+        base: `var(--bs-${color})`,
+        bg: `var(--bs-${color})`,
         fg: `light-dark(var(--bs-${color}-600), var(--bs-${color}-400))`,
         fgEmphasis: `light-dark(var(--bs-${color}-800), var(--bs-${color}-200))`,
         bgSubtle: `light-dark(var(--bs-${color}-100), var(--bs-${color}-900))`,
         bgMuted: `light-dark(var(--bs-${color}-200), var(--bs-${color}-800))`,
-        border: `light-dark(var(--bs-${color}-300), var(--bs-${color}-600))`,
-        focusRing: `light-dark(color-mix(in oklch, var(--bs-${color}-500) 50%, var(--bs-bg-body)), color-mix(in oklch, var(--bs-${color}-500) 75%, var(--bs-bg-body)))`,
-        contrast: 'var(--bs-white)'
+        border: `light-dark(var(--bs-${color}-400), var(--bs-${color}-600))`,
+        focusRing: `light-dark(var(--bs-${color}-300), var(--bs-${color}-700))`,
+        contrast: 'var(--bs-${color}-con)'
       }
     }
 
