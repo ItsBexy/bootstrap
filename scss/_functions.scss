@@ -189,7 +189,7 @@
   
   @if ($Y1 < $Y2) { @return mix-to-luminance($Ytarget, $c2, $c1); }        // swap colors if lighter is second
   @if ($Y1 < $Ytarget) { @return mix-to-luminance($Ytarget, #fff,$c1); }   // mix with white if both are too dark
-  @if ($Y2 > $Ytarget) { @return mix-to-luminancel($Ytarget, $c2, #000 ); } // mix with black if both are too light
+  @if ($Y2 > $Ytarget) { @return mix-to-luminance($Ytarget, $c2, #000 ); } // mix with black if both are too light
 
   $mix-percent: math.div($Y1 - $Ytarget, $Y1 - $Y2) * 100;
 
@@ -248,4 +248,13 @@
         $new-range: list.append($new-range, correct-gamut($color, $gamut))
     }
     @return $new-range;
+}
+
+// rounds off the channels of an oklch color to ~4 significant digits
+@function format-oklch($c) {
+      $c: color.to-space($c, oklch);
+      @return color.change($c, 
+                   $lightness:math.div(math.round(color.channel($c,"lightness")*10),10),
+                   $hue: math.div(math.round(color.channel($c,"hue")*10),10),
+                   $chroma:math.div(math.round(color.channel($c,"chroma")*1000),1000));
 }
