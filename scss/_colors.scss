@@ -66,8 +66,9 @@ $mixing-ranges:() !default;
 $mixing-range-gamut: display-p3 !default;
 $mixing-range-space: oklch !default;
 
-$mixing-ranges: defaults(
+$mixing-ranges: defaults( // optional: create a gradient range from light to dark and assign it to a color
   (
+    // demo;  progresses through yellow -> orange -> red -> magenta -> purple
     "sunset": (oklch(95% 0.0631 90), oklch(85% 0.1436 80), oklch(75% 0.173 55), $sunset, oklch(55% 0.2198 10), oklch(45% 0.1871 350), oklch(30% 0.1436 320)),
   ),
 $mixing-ranges
@@ -76,7 +77,7 @@ $mixing-ranges
 @each $color-name, $color in $colors {
   $range: map.get($mixing-ranges, $color-name);
   @if ($range == null) {
-      $range: create-range($color, $mixing-range-space);
+      $range: create-color-range($color, $mixing-range-space);
   }
   $mixing-ranges: map.set($mixing-ranges, $color-name, correct-gamut-all($range, $mixing-range-gamut));
 }
@@ -87,23 +88,27 @@ $white-value: 0 !default;
 $black-value: 1000 !default;
 $color-stops: (25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950, 975) !default;
 
-$luminance-calibration-constants: ("WCAG2": 21, "APCA": 4.076621147, "APCA-positive": 4.85544474, "APCA-negative": 3.456845874);
-$luminance-calibration: "APCA" !default;
+$apca-calibration: true !default; // set to false to use WCAG 2
 // scss-docs-end luminance-scale-options
 
 @function target-luminance($n) {
     $r: math.div($n - $black-value, $white-value - $black-value);
-    $t: map.get($luminance-calibration-constants, $luminance-calibration);
-    @return math.div(math.pow($t, $r) - 1, $t - 1);
+    $r: math.clamp(0, $r, 1);
+
+    @if ($apca-calibration) { // calibrate luminance for APCA (average power curve)
+      @return math.pow($r, 1.67235732701554);
+    }
+    // calibrate for WCAG2 instead (exponential curve)
+    @return math.div(math.pow(21, $r) - 1, 20);
 }
 
 $median-luminance: target-luminance(math.div($white-value + $black-value, 2)) !default;
 
 $color-stop-luminances: () !default;
 
-@each $n in $color-stops {
+@each $n in $color-stops { // define target luminance at each stop
   $nToken: $n+"";
-  @while (string.length($nToken) < 3) {
+  @while (string.length($nToken) < 3) { // pad token number to 3 digits
     $nToken: "0" + $nToken;
   }
   $color-stop-luminances: map.set($color-stop-luminances, $nToken, target-luminance($n));
@@ -114,13 +119,13 @@ $color-tokens: () !default;
 $-color-defaults: () !default;
 
 @each $color-name, $color in $colors {
-  $color-tokens: map.set($color-tokens, "--#{$color-name}", $color); // create base token
+  $color-tokens: map.set($color-tokens, "--#{$color-name}", format-oklch($color)); // create base token
   $contrast-color: if(sass(luminance($color) <= $median-luminance): #fff; else: #000);
   $color-tokens:map.set($color-tokens, "--#{$color-name}-con", $contrast-color); // create contrast token
   
   $range: map.get($mixing-ranges, $color-name);
   @each $stop, $Y in $color-stop-luminances {       // create luminance range tokens
-    $color-tokens: map.set($color-tokens, "--#{$color-name}-#{$stop}", mix-from-range($range, $Y));
+    $color-tokens: map.set($color-tokens, "--#{$color-name}-#{$stop}", format-oklch(mix-from-color-range($range, $Y)));
   }
 }
 

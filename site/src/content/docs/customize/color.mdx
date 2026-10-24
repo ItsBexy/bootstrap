@@ -103,8 +103,8 @@ The median stop (`500` by default) targets equal contrast against both black and
 </BsTable>
 
 <Callout type="warning">
-- The **APCA** values shown above are *only* applicable when  `$luminance-calibration` is set to `"APCA"`.
-- The **WCAG 2** values shown above are *only* applicable when  `$luminance-calibration` is set to `"WCAG2"`.
+- The **APCA** values shown above are *only* applicable when  `$apca-calibration` is set to `true`.
+- The **WCAG 2** values shown above are *only* applicable when  `$apca-calibration` is set to `false`.
 <br/>
 Calibrating contrast for one standard can yield results that fall short in the other. On the whole, APCA is stricter with dark color combinations, while WCAG 2 is stricter with light colors. When in doubt about a color choice, or when standards conflict, consider erring on the side of greater contrast.
 </Callout>
@@ -125,15 +125,15 @@ In practice, our final output CSS variables look like this:
 --bs-blue-con: #fff;               // max contrast against base
 
 // generated luminance stops
---bs-blue-025: oklch(98.434179349% 0.00876563 243.815543119deg);
---bs-blue-050: oklch(96.8716682856% 0.0176945205 243.121018952deg);
---bs-blue-100: oklch(93.7533669842% 0.036116881 241.6331264861deg);
---bs-blue-200: oklch(87.5681997734% 0.0732477856 240.7208500549deg);
+--bs-blue-025: oklch(98.7% 0.008 243.9deg);
+--bs-blue-050: oklch(97.3% 0.015 243.3deg);
+--bs-blue-100: oklch(94.5% 0.032 242deg);
+--bs-blue-200: oklch(88.6% 0.067 240.4deg);
 // ...
---bs-blue-800: oklch(47.4568579607% 0.1555413323 245.0994278981deg);
---bs-blue-900: oklch(36.8380234051% 0.1236608115 246.27436098deg);
---bs-blue-950: oklch(28.9509172443% 0.1000866027 247.6402877807deg);
---bs-blue-975: oklch(22.8497495302% 0.0791815856 247.7467174968deg);
+--bs-blue-800: oklch(43.9% 0.145 245.5deg);
+--bs-blue-900: oklch(32.5% 0.111 247.1deg);
+--bs-blue-950: oklch(24.7% 0.085 247.7deg);
+--bs-blue-975: oklch(19.1% 0.066 247.9deg);
 ```
 
 ## Customizing

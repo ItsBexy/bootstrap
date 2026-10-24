@@ -173,12 +173,12 @@
 }
 
 // Mixes two colors to a targeted relative luminance.
-@function mix-to-luminance($Ytarget, $c1, $c2) {
+@function mix-to-luminance($Ytarget, $c1, $c2: null) {
 
+  $Ytarget: math.clamp(0, $Ytarget, 1);
   $Y1: luminance($c1);
 
-  @if ($c2 == null) {
-    // mix with black or white if only one color is provided
+  @if ($c2 == null) { // Mix with black or white if only one color is provided
     @if ($Y1 > $Ytarget) {
       @return mix-to-luminance($Ytarget, $c1, #000 );
     }
@@ -187,9 +187,9 @@
   
   $Y2: luminance($c2);
   
-  @if ($Y1 < $Y2) { @return mix-to-luminance($Ytarget, $c2, $c1); }        // swap colors if lighter is second
-  @if ($Y1 < $Ytarget) { @return mix-to-luminance($Ytarget, #fff,$c1); }   // mix with white if both are too dark
-  @if ($Y2 > $Ytarget) { @return mix-to-luminancel($Ytarget, $c2, #000 ); } // mix with black if both are too light
+  @if ($Y1 < $Y2) { @return mix-to-luminance($Ytarget, $c2, $c1); }        // Swap colors if lighter is second
+  @if ($Y1 < $Ytarget) { @return mix-to-luminance($Ytarget, #fff,$c1); }   // Mix with white if both are too dark
+  @if ($Y2 > $Ytarget) { @return mix-to-luminance($Ytarget, $c2, #000 ); } // Mix with black if both are too light
 
   $mix-percent: math.div($Y1 - $Ytarget, $Y1 - $Y2) * 100;
 
@@ -197,7 +197,7 @@
 }
 
 // Mixes colors from a defined range to a targeted relative luminance
-@function mix-from-range($range, $Ytarget) {
+@function mix-from-color-range($range, $Ytarget) {
 
   $count: list.length($range);
 
@@ -224,7 +224,7 @@
 }
 
 // Creates a generic color range from light to dark
-@function create-range($color, $mixing-range-space: oklch) {
+@function create-color-range($color, $mixing-range-space: oklch) {
     @return (
         #fff,
         color.mix(#fff, $color, $weight: 75%, $method: $mixing-range-space),
@@ -238,14 +238,25 @@
     );
 }
 
+// Corrects a color to a chosen gamut (ie. display-p3, srgb, rec2020)
 @function correct-gamut($color, $gamut) {
     @return color.to-gamut($color, $space: $gamut, $method: local-minde);
 }
 
+// Corrects a range of colors to a chosen gamut
 @function correct-gamut-all($range, $gamut) {
     $new-range: ();
     @each $color in $range {
         $new-range: list.append($new-range, correct-gamut($color, $gamut))
     }
     @return $new-range;
+}
+
+// Rounds off the channels of an oklch color to ~4 significant digits
+@function format-oklch($c) {
+      $c: color.to-space($c, oklch);
+      @return color.change($c, 
+                   $lightness:math.div(math.round(color.channel($c,"lightness")*10),10),
+                   $hue: math.div(math.round(color.channel($c,"hue")*10),10),
+                   $chroma:math.div(math.round(color.channel($c,"chroma")*1000),1000));
 }
